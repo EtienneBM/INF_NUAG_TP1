@@ -1,5 +1,12 @@
 package ca.polymtl.inf4410.tp1.client;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -93,4 +100,41 @@ public class Client {
 			System.out.println("Erreur: " + e.getMessage());
 		}
 	}
+	
+	
+	//-------------------Part 2---------------------------
+	//Test si le client a déjà un fichier avec un Id
+	//S'il en a déjà un il ne se passe rien
+	//s'il n'en a pas crée un fichier et y stock un nouvel id généré par le serveur.
+	@SuppressWarnings("unused")
+	private void haveAnId(String path){
+		if (new File(path).exists() || (new File(path).length() > 0)){
+			System.out.println("You already have an Id");
+		}
+		else{
+			File myIdFile = new File(path);
+			FileOutputStream is;
+			int id = distantServerStub.generateclientid();
+			try {
+				is = new FileOutputStream(myIdFile);
+				OutputStreamWriter osw = new OutputStreamWriter(is);    
+	            Writer w = new BufferedWriter(osw);
+	            w.write(id);
+	            w.close();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				System.out.println("File not found exception " + e);
+				e.printStackTrace();
+			}catch (IOException e) {
+				// TODO Auto-generated catch block
+				System.out.println("Err in file creation " + e);
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
+	
+	
+	
 }

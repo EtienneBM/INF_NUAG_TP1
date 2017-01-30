@@ -1,6 +1,6 @@
 package ca.polymtl.inf4410.tp1.server;
 
-import java.io.File;
+
 import java.rmi.ConnectException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -10,6 +10,8 @@ import java.rmi.server.UnicastRemoteObject;
 import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 
 public class Server implements ServerInterface {
+	
+	private int id = 0;
 
 	public static void main(String[] args) {
 		Server server = new Server();
@@ -51,9 +53,11 @@ public class Server implements ServerInterface {
 	
 	
 	//---------------------------- part 2 --------------------------------------
-	public int generateclientid(){//ecrire methode
-		int id = 0;
-		return id;
+	//cette medthode renvoie un id. 
+	//A chaque fois que le serveur est arreté puis relancé la liste des id reccomence à 1
+	public int generateclientid(){
+		this.id = this.id + 1;
+		return this.id;
 	}
 	
 	public void create(String nom){//def le type + ecrire methode
