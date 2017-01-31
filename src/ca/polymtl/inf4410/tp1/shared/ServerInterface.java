@@ -6,4 +6,10 @@ import java.rmi.RemoteException;
 public interface ServerInterface extends Remote {
 	int execute(int a, int b) throws RemoteException;
 	int generateclientid();
+	boolean create(String nom) throws Exception;
+	String [] list();
+	void syncLocalDir();
+	void get(/*nom, checksum*/);
+	void lock(/*nom, clientid, checksum*/);
+	void push(/*nom, contenu, clientid*/);
 }

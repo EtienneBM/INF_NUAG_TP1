@@ -1,6 +1,8 @@
 package ca.polymtl.inf4410.tp1.server;
 
 
+import java.io.File;
+import java.io.IOException;
 import java.rmi.ConnectException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -60,13 +62,21 @@ public class Server implements ServerInterface {
 		return this.id;
 	}
 	
-	public void create(String nom){//def le type + ecrire methode
-
+	public boolean create(String nom) throws Exception{//def le type + ecrire methode
+		if (new File(nom).exists()){
+			System.out.println("Le fichier " + nom + "existe deja"); 
+			return false; 
+		}
+		else 
+		{
+			return new File(nom).createNewFile();}
 	}
 	
-	public void list(){//def le type + ecrire methode
 		
+	public String[] list(){//def le type + ecrire methode
+		return null;
 	}
+
 	
 	public void syncLocalDir(){//def le type + ecrire methode
 		

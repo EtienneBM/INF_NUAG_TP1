@@ -24,7 +24,6 @@ public class Client {
 		}
 
 		Client client = new Client(distantHostname);
-		client.run();
 	}
 
 	
@@ -46,17 +45,7 @@ public class Client {
 		}
 	}
 
-	private void run() {
-
-
-		if (localServerStub != null) {
-			appelRMILocal();
-		}
-
-		if (distantServerStub != null) {
-			appelRMIDistant();
-		}
-	}
+	
 
 	private ServerInterface loadServerStub(String hostname) {
 		ServerInterface stub = null;
@@ -76,31 +65,6 @@ public class Client {
 	}
 
 
-
-	private void appelRMILocal() {
-		try {
-			long start = System.nanoTime();
-			int result = localServerStub.execute(4, 7);
-			long end = System.nanoTime();
-			System.out.println("Temps √©coul√© appel RMI local: " + (end - start) + " ns");
-			System.out.println("R√©sultat appel RMI local: " + result);
-		} catch (RemoteException e) {
-			System.out.println("Erreur: " + e.getMessage());
-		}
-	}
-
-	private void appelRMIDistant() {
-		try {
-			long start = System.nanoTime();
-			int result = distantServerStub.execute(4, 7);
-			long end = System.nanoTime();
-			System.out.println("Temps √©coul√© appel RMI distant: "+ (end - start) + " ns");
-			System.out.println("R√©sultat appel RMI distant: " + result);
-		} catch (RemoteException e) {
-			System.out.println("Erreur: " + e.getMessage());
-		}
-	}
-	
 	
 	//-------------------Part 2---------------------------
 	//Test si le client a dÈj‡ un fichier avec un Id
@@ -134,7 +98,26 @@ public class Client {
 	}
 	
 	
-	
+
+
+	private void list() {
+			String liste[] = distantServerStub.list();
+			for (int i =0 ; i<liste.length;i++){
+				System.out.println("* " + liste[i]);
+			}
+			System.out.println(liste.length + " fichier(s)");
+	}
+
+	private void create (String nom) throws Exception {
+		boolean success = distantServerStub.create(nom);
+		if (success == true){
+			System.out.println(nom +" ajoutÈ.");
+		}
+		else {
+			System.out.println(nom + " existe dÈj‡.");
+		}
+		
+	}
 	
 	
 }
