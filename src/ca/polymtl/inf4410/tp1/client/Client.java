@@ -109,6 +109,7 @@ public class Client {
 		System.out.println(liste.length + " fichier(s)");
 	}
 
+	@SuppressWarnings("unused")
 	private void create (String nom) throws Exception {
 		boolean success = distantServerStub.create(nom);
 		if (success == true){

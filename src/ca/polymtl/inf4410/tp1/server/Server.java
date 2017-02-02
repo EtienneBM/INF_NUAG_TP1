@@ -4,15 +4,11 @@ package ca.polymtl.inf4410.tp1.server;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.rmi.ConnectException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -74,9 +70,9 @@ public class Server implements ServerInterface {
 			System.out.println("Le fichier " + nom + "existe deja"); 
 			return false; 
 		}
-		else 
-		{
-			return new File(nom).createNewFile();}
+		else {
+			return new File(nom).createNewFile();
+		}
 	}
 	
 	//retourne la liste des fichiers présents dans le dossier courant
@@ -92,7 +88,7 @@ public class Server implements ServerInterface {
 	}
 	
 	//retourne le fihcier seulement si les checksum du client et du server sont différents
-	public File get(String nom, String checksum) throws IOException, NoSuchAlgorithmException{//def le type + ecrire methode
+	public File get(String nom, String checksum) throws IOException, NoSuchAlgorithmException{
 		//Create checksum for this file
 		File file = new File(nom);
 		 
@@ -123,7 +119,7 @@ public class Server implements ServerInterface {
 	
 	
 	
-	//----------- other functions --------
+	//----------- other functions we need --------
 	private static String getFileChecksum(MessageDigest digest, File file) throws IOException
 	{
 	    //Get file input stream for reading the file content
