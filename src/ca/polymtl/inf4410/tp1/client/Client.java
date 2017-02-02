@@ -100,12 +100,13 @@ public class Client {
 	
 
 
+	@SuppressWarnings("unused")
 	private void list() {
-			String liste[] = distantServerStub.list();
-			for (int i =0 ; i<liste.length;i++){
-				System.out.println("* " + liste[i]);
-			}
-			System.out.println(liste.length + " fichier(s)");
+		File liste[] = distantServerStub.list();
+		for (int i =0 ; i<liste.length;i++){
+			System.out.println("* " + liste[i]);
+		}
+		System.out.println(liste.length + " fichier(s)");
 	}
 
 	private void create (String nom) throws Exception {
