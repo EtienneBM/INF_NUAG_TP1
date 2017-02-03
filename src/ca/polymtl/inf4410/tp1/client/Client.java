@@ -99,7 +99,7 @@ public class Client {
 	
 	
 
-
+// affiche la liste des fichiers sur le serveur
 	private void list() {
 			String liste[] = distantServerStub.list();
 			for (int i =0 ; i<liste.length;i++){
@@ -107,7 +107,10 @@ public class Client {
 			}
 			System.out.println(liste.length + " fichier(s)");
 	}
-
+	
+//  create permet de créer un nouveau fichier avec un nom donné en paramètre. La fonction appelle la fonction create() sur le serveur distant qui crée le fichier et
+// qui renvoie un booléen si l'opération a réussi. 
+	@SuppressWarnings("unused")
 	private void create (String nom) throws Exception {
 		boolean success = distantServerStub.create(nom);
 		if (success == true){
@@ -118,6 +121,17 @@ public class Client {
 		}
 		
 	}
+	
+// syncLocalDir récupere la liste des Files qui sont enregistrés sur le serveur. Puis la fonction, crée les fichiers en écrasant ceux qui existent déja. 
+	@SuppressWarnings("unused")
+	private void syncLocalDir() throws IOException {
+		File[] liste = distantServerStub.syncLocalDir();
+		for (int i =0 ; i<liste.length;i++){
+			if (liste[i].exists())
+			{liste[i].delete();}
+			liste[i].createNewFile();
+			}
+		}
 	
 	
 }

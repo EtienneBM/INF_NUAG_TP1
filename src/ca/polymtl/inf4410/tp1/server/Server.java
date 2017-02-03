@@ -8,7 +8,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-
 import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 
 public class Server implements ServerInterface {
@@ -61,7 +60,7 @@ public class Server implements ServerInterface {
 		this.id = this.id + 1;
 		return this.id;
 	}
-	
+	//Create permet de creer un fichier si il n'existe pas. La fonction renvoie un booléen de valeur true si le fichier a bien été créé, et false sinon.
 	public boolean create(String nom) throws Exception{//def le type + ecrire methode
 		if (new File(nom).exists()){
 			System.out.println("Le fichier " + nom + "existe deja"); 
@@ -77,17 +76,21 @@ public class Server implements ServerInterface {
 		return null;
 	}
 
-	
-	public void syncLocalDir(){//def le type + ecrire methode
-		
+	// syncLocalDir() renvoie la liste des fichiers qui sont sur le serveur. On récupere le chemin grace a un fichier f que l'on crée.
+	public File[] syncLocalDir(){//def le type + ecrire methode
+		File f = new File("");
+		String[] liste = this.list(); 
+		File[] listeFile = new File[liste.length];
+		listeFile= f.listFiles(); 
+		return listeFile; 
 	}
 	
-	public void get(/*nom, checksum*/){//def le type + ecrire methode
-		
+	public File get( String nom,int checksum){//def le type + ecrire methode
+		return null;
 	}
 	
-	public void lock(/*nom, clientid, checksum*/){//def le type + ecrire methode
-		
+	public void lock( String nom, int clientid, int checksum){
+				
 	}
 	
 	public void push(/*nom, contenu, clientid*/){//def le type + ecrire methode
