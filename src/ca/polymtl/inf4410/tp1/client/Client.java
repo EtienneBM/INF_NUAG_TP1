@@ -122,6 +122,7 @@ public class Client {
 				   System.out.println("* " + cle + " verrouillé par client "+liste.get(cle));
 			   }
 			}
+			System.out.println(liste.size()+" fichier(s)");
 	}
 
 //  create permet de créer un nouveau fichier avec un nom donné en paramètre. La fonction appelle la fonction create() sur le serveur distant qui crée le fichier et
