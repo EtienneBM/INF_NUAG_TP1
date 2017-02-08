@@ -242,13 +242,20 @@ public class Client {
 		}
 		
 	private void copieLocale (File f){
+		System.out.println("1");
 		FileInputStream fis = null;
+		System.out.println("2");
 		FileOutputStream fos = null;
 	      try {	
+	    	  System.out.println("3");
 	         fis = new FileInputStream(f);
+	         System.out.println("4");
 	         fos = new FileOutputStream(new File(f.getName()));
+	         System.out.println("5");
 	         byte[] buf = new byte[8];
+	         System.out.println("6");
 	         int n =0;
+	         System.out.println("7");
 	         while ((n = fis.read(buf)) >= 0) {
 		            // On écrit dans notre deuxième fichier avec l'objet adéquat
 		            fos.write(buf);
