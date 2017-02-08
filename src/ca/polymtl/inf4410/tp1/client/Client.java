@@ -2,6 +2,7 @@ package ca.polymtl.inf4410.tp1.client;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,22 +13,28 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
 import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 
 public class Client {
 	public static void main(String[] args) {
 		String distantHostname = null;
-
+	
+		
 		if (args.length > 0) {
 			distantHostname = args[0];
 		}
 
+		@SuppressWarnings("unused")
 		Client client = new Client(distantHostname);
 	}
 
 	
-	private ServerInterface localServerStub = null;
 	private ServerInterface distantServerStub = null;
 
 	public Client(String distantServerHostname) {
@@ -36,9 +43,6 @@ public class Client {
 		if (System.getSecurityManager() == null) {
 			System.setSecurityManager(new SecurityManager());
 		}
-
-		
-		localServerStub = loadServerStub("127.0.0.1");
 
 		if (distantServerHostname != null) {
 			distantServerStub = loadServerStub(distantServerHostname);
@@ -70,10 +74,10 @@ public class Client {
 	//Test si le client a déjà un fichier avec un Id
 	//S'il en a déjà un il ne se passe rien
 	//s'il n'en a pas crée un fichier et y stock un nouvel id généré par le serveur.
-	@SuppressWarnings("unused")
-	private void haveAnId(String path){
+	private String haveAnId(String path){
 		if (new File(path).exists() || (new File(path).length() > 0)){
-			System.out.println("You already have an Id");
+			//recuperation de id 
+			return "";
 		}
 		else{
 			File myIdFile = new File(path);
@@ -86,28 +90,35 @@ public class Client {
 	            w.write(id);
 	            w.close();
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
 				System.out.println("File not found exception " + e);
 				e.printStackTrace();
 			}catch (IOException e) {
-				// TODO Auto-generated catch block
 				System.out.println("Err in file creation " + e);
 				e.printStackTrace();
 			}
+			return ""+id;
 		}
 	}
 	
 	
 
 // affiche la liste des fichiers sur le serveur
+	@SuppressWarnings("unused")
 	private void list() {
-			String liste[] = distantServerStub.list();
-			for (int i =0 ; i<liste.length;i++){
-				System.out.println("* " + liste[i]);
+			HashMap<String,String> liste = distantServerStub.list();
+			Set<String> cles = liste.keySet();
+			Iterator<String> it = cles.iterator();
+			while (it.hasNext()){
+			   Object cle = it.next(); 
+			   if (liste.get(cle)==""){
+				   System.out.println("* " + cle + " non verrouillé");
+			   }
+			   else {
+				   System.out.println("* " + cle + " verrouillé par client "+liste.get(cle));
+			   }
 			}
-			System.out.println(liste.length + " fichier(s)");
 	}
-	
+
 //  create permet de créer un nouveau fichier avec un nom donné en paramètre. La fonction appelle la fonction create() sur le serveur distant qui crée le fichier et
 // qui renvoie un booléen si l'opération a réussi. 
 	@SuppressWarnings("unused")
@@ -132,6 +143,118 @@ public class Client {
 			liste[i].createNewFile();
 			}
 		}
+	private static String getFileChecksum(MessageDigest digest, File file) throws IOException
+	{
+	    //Get file input stream for reading the file content
+	    FileInputStream fis = new FileInputStream(file);
+	     
+	    //Create byte array to read data in chunks
+	    byte[] byteArray = new byte[1024];
+	    int bytesCount = 0; 
+	      
+	    //Read file data and update in message digest
+	    while ((bytesCount = fis.read(byteArray)) != -1) {
+	        digest.update(byteArray, 0, bytesCount);
+	    };
+	     
+	    //close the stream; We don't need it now.
+	    fis.close();
+	     
+	    //Get the hash's bytes
+	    byte[] bytes = digest.digest();
+	     
+	    //This bytes[] has bytes in decimal format;
+	    //Convert it to hexadecimal format
+	    StringBuilder sb = new StringBuilder();
+	    for(int i=0; i< bytes.length ;i++)
+	    {
+	        sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+	    }
+	     
+	    //return complete hash
+	   return sb.toString();
+	}
+	@SuppressWarnings("unused")
+	private void get (String nom) throws NoSuchAlgorithmException, IOException{
+		File f ;
+		if (new File(nom).exists()){
+		MessageDigest md5Digest = MessageDigest.getInstance("MD5");
+		
+		f = distantServerStub.get(nom, getFileChecksum(md5Digest, new File(nom)));
+		}
+		else {
+		 f = distantServerStub.get(nom, "-1");		
+		}
+		this.copieLocale(f);
+		System.out.println(nom + " synchronisé");
+	}
 	
+	@SuppressWarnings("unused")
+	private void lock(String nom) throws NoSuchAlgorithmException, IOException{
+		String checksum = "-1"; 
+		File f  = distantServerStub.lock(nom, this.haveAnId(nom), checksum); 
+		if (f!=null){
+			this.copieLocale(f);
+		}
+	}
 	
+	@SuppressWarnings("unused")
+	private void push(String nom) throws IOException{
+		File f = new File(nom); 
+		boolean done = distantServerStub.push(nom, f, this.haveAnId(nom));
+		if (done){
+			System.out.println(nom + " a été envoyé au serveur");
+		}
+		else {
+			System.out.println("operation refusée : vous devez d'abord verrouiller le fichier");
+		}
+		}
+		
+	private void copieLocale (File f){
+		FileInputStream fis = null;
+		FileOutputStream fos = null;
+	      try {	
+	         fis = new FileInputStream(f);
+	         fos = new FileOutputStream(new File(f.getName()));
+	         byte[] buf = new byte[8];
+	         int n =0;
+	         while ((n = fis.read(buf)) >= 0) {
+		            // On écrit dans notre deuxième fichier avec l'objet adéquat
+		            fos.write(buf);
+		            // On affiche ce qu'a lu notre boucle au format byte et au
+		            // format char
+		            for (byte bit : buf) {
+		               System.out.print("\t" + bit + "(" + (char) bit + ")");
+		            }
+		            System.out.println("");
+		            //Nous réinitialisons le buffer à vide
+		            //au cas où les derniers byte lus ne soient pas un multiple de 8
+		            //Ceci permet d'avoir un buffer vierge à chaque lecture et ne pas avoir de doublon en fin de fichier
+		            buf = new byte[8];
+	         }
+		   } catch (FileNotFoundException e) {
+		         // Cette exception est levée si l'objet FileInputStream ne trouve
+		         // aucun fichier
+		         e.printStackTrace();
+		      } catch (IOException e) {
+		         // Celle-ci se produit lors d'une erreur d'écriture ou de lecture
+		         e.printStackTrace();
+		      } finally {
+		         // On ferme nos flux de données dans un bloc finally pour s'assurer
+		         // que ces instructions seront exécutées dans tous les cas même si
+		         // une exception est levée !
+		         try {
+		            if (fis != null)
+		               fis.close();
+		         } catch (IOException e) {
+		            e.printStackTrace();
+		         }
+		         try {
+		            if (fos != null)
+		               fos.close();
+		         } catch (IOException e) {
+		            e.printStackTrace();
+		         }
+		      }
+	}
 }
