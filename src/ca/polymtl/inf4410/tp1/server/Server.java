@@ -1,6 +1,5 @@
 package ca.polymtl.inf4410.tp1.server;
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -28,7 +27,7 @@ public class Server implements ServerInterface {
 
 	public Server() {
 		super();
-		this.verrouillage=new HashMap<String,String>(50);
+		this.verrouillage=new HashMap<String,String>(50); // Mise a jour de la HashMap au lancement du serveur
 	}
 
 	private void run() {
@@ -53,38 +52,38 @@ public class Server implements ServerInterface {
 	
 	
 	//---------------------------- part 2 --------------------------------------
-	//cette medthode renvoie un id. 
-	//A chaque fois que le serveur est arreté puis relancé la liste des id reccomence à 1
+	//cette methode renvoie un id. 
+	//A chaque fois, que le serveur est arreté puis relancé la liste des id recommence à 1
 	public int generateclientid() throws RemoteException{
 		this.id = this.id + 1;
 		return this.id;
 	}
-	//Create permet de creer un fichier si il n'existe pas. La fonction renvoie un booléen de valeur true si le fichier a bien été créé, et false sinon.
-	public boolean create(String nom) throws Exception, RemoteException{//def le type + ecrire methode
+	
+	//Create permet de creer un fichier si il n'existe pas. La fonction renvoie un booléen de valeur true si le fichier
+	//a bien été créé, et false sinon ce qui permet au client de vérifier l'execution de la méthode distante.
+	public boolean create(String nom) throws Exception, RemoteException{
 		if (new File(nom).exists()){
-			System.out.println("Le fichier " + nom + "existe deja"); 
-			this.verrouillage.put(nom, "");
 			return false;
 		}
 		else 
 		{
-			return new File(nom).createNewFile();}
+			this.verrouillage.put(nom, ""); //On met a jour la HashMap avec le nouveau fichier etant deverouillé
+			return new File(nom).createNewFile();
+			}
 	}
 	 
 	//retourne le fichier seulement si les checksum du client et du server sont différents
 		public File get(String nom, String checksum) throws IOException, NoSuchAlgorithmException, RemoteException{
 			//Create checksum for this file
 			File file = new File(nom);
+			// Forcer l'envoie du fichier avec la valeur -1 envoyé par le client
 			if (Integer.parseInt(checksum)==-1){
 				return file; 
 			}
 			else {
-				//Use MD5 algorithm
-				MessageDigest md5Digest = MessageDigest.getInstance("MD5");
-				 
-				//Get the checksum
-				String localChecksum = getFileChecksum(md5Digest, file);
 				
+				//Get the checksum
+				String localChecksum = getFileChecksum(file);
 				//return file only if the client and the server checksum are differents
 				if(localChecksum == checksum){
 					return null;
@@ -99,8 +98,12 @@ public class Server implements ServerInterface {
 		
 		
 		//----------- other functions we need --------
-		private static String getFileChecksum(MessageDigest digest, File file) throws IOException, RemoteException{
+		//Permet de retourner le checksum associé à un fichier
+		private static String getFileChecksum( File file) throws IOException, NoSuchAlgorithmException
 		{
+			MessageDigest digest = MessageDigest.getInstance("MD5");
+
+			
 		    //Get file input stream for reading the file content
 		    FileInputStream fis = new FileInputStream(file);
 		     
@@ -128,22 +131,26 @@ public class Server implements ServerInterface {
 		    }
 		     
 		    //return complete hash
-		   return sb.toString();}
+		   return sb.toString();
 		}
-		//retourne la liste des fichiers présents dans le dossier courant
-		//ne permet pas encore d'avoir l'info si le fichier est lock ou unlock
+		//retourne la liste des fichiers présents dans le dossier courant avec l'identifiant du client
+		//ne permet pas encore le nom du client 
 	public HashMap<String,String> list() throws RemoteException{
 			return this.verrouillage; 
 	}
 
-	// syncLocalDir() renvoie la liste des fichiers qui sont sur le serveur. On récupere le chemin grace a un fichier f que l'on crée.
-	public File[] syncLocalDir() throws RemoteException{//def le type + ecrire methode
+	// syncLocalDir() renvoie la liste des fichiers qui sont sur le serveur. On récupere le chemin grace a un fichier f 
+	//que l'on crée.
+	public File[] syncLocalDir() throws RemoteException{
 		File curDir = new File(".");
 		return curDir.listFiles();
 	}
 		
-	public boolean push(String nom, File contenu, String clientid) throws IOException, RemoteException{//def le type + ecrire methode
+	// La fonction push permet de réécrire le fichier nom avec le contenu fourni si le client est celui qui a verouille
+	public boolean push(String nom, File contenu, String clientid) throws IOException, RemoteException{
+		// verification de l'existance du fichier et du verouillage du fichier par le bon client
 		if(this.verrouillage.containsKey(nom) && this.verrouillage.get(nom)==clientid ){
+			// remplacement du contenu du fichier par lecture et ecriture
 			FileInputStream src = new FileInputStream(contenu);
 		    FileOutputStream dest = new FileOutputStream(nom);
 		 
@@ -159,21 +166,23 @@ public class Server implements ServerInterface {
 		 
 		    src.close();
 		    dest.close();
+		    // on retourne la valeur vraie pour dire au client que les conditions etaient bien verifies.
 			return true; 
 		}
 		else {
+			// soit le fichier n'existe pas, soit le client n'avait pas verouille le fichier 
 			return false; 
 		}
 	}
 
+	//la fonction lock() permet au client de verouiller un fichier s'il ne l'est pas déjà.
 	public File lock(String nom, String clientid, String checksum) throws IOException, RemoteException, NoSuchAlgorithmException {
+		// verification si le fichier existe et s'il n'est pas déja verouillé.
 		if (this.verrouillage.containsKey(nom) && this.verrouillage.get(nom)=="" ){
 			this.verrouillage.put(nom, clientid);
 			File file = new File(nom);
-			MessageDigest md5Digest = MessageDigest.getInstance("MD5");
-			 
 			//Get the checksum
-			String localChecksum = getFileChecksum(md5Digest, file);
+			String localChecksum = getFileChecksum(file);
 			
 			//return file only if the client and the server checksum are differents
 			if(localChecksum == checksum){
