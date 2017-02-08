@@ -75,13 +75,15 @@ public class Server implements ServerInterface {
 	//retourne le fichier seulement si les checksum du client et du server sont différents
 		public File get(String nom, String checksum) throws IOException, NoSuchAlgorithmException, RemoteException{
 			//Create checksum for this file
+			System.out.println("Fonction get appelé");
 			File file = new File(nom);
 			// Forcer l'envoie du fichier avec la valeur -1 envoyé par le client
 			if (Integer.parseInt(checksum)==-1){
+				System.out.println("Le checksum est bien -1");
 				return file; 
 			}
 			else {
-				
+				System.out.println("Le checksum n'set pas -1"); 
 				//Get the checksum
 				String localChecksum = getFileChecksum(file);
 				//return file only if the client and the server checksum are differents

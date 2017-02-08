@@ -136,7 +136,7 @@ public class Client {
 			Iterator<String> it = cles.iterator();
 			while (it.hasNext()){
 			   Object cle = it.next(); 
-			   if (liste.get(cle)==""){
+			   if (liste.get(cle).equals("")){
 				   System.out.println("* " + cle + " non verrouillé");
 			   }
 			   else {
@@ -212,6 +212,9 @@ public class Client {
 		}
 		else {
 			f = distantServerStub.get(nom, "-1");		
+		}
+		if (f==null){
+		System.out.println("Fichier null");
 		}
 		this.copieLocale(f);
 		System.out.println(nom + " synchronisé");
