@@ -24,7 +24,7 @@ import java.util.Set;
 import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 
 public class Client {
-	public static void main(String[] args) throws RemoteException {
+	public static void main(String[] args) throws Exception {
 		String distantHostname = null;
 		String commande = "";
 		
@@ -39,6 +39,21 @@ public class Client {
 		}
 		if (commande.equals("list")){
 			client.list(); 
+		}
+		if (commande.equals("create")){
+			client.create(args[2]); 
+		}
+		if (commande.equals("syncLocalDir")){
+			client.syncLocalDir(); 
+		}
+		if (commande.equals("get")){
+			client.get(args[2]); 
+		}
+		if (commande.equals("lock")){
+			client.lock(args[2]); 
+		}
+		if (commande.equals("push")){
+			client.push(args[2]); 
 		}
 	}
 
