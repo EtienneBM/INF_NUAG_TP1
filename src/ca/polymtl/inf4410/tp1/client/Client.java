@@ -24,9 +24,9 @@ import java.util.Set;
 import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 
 public class Client {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws RemoteException {
 		String distantHostname = null;
-	
+		String commande = "";
 		
 		if (args.length > 0) {
 			distantHostname = args[0];
@@ -34,6 +34,12 @@ public class Client {
 
 		@SuppressWarnings("unused")
 		Client client = new Client(distantHostname);
+		if (args.length > 1) {
+			commande = args[1];
+		}
+		if (commande=="list"){
+			client.list(); 
+		}
 	}
 
 	
