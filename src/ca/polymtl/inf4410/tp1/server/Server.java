@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.rmi.ConnectException;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -54,12 +55,12 @@ public class Server implements ServerInterface {
 	//---------------------------- part 2 --------------------------------------
 	//cette medthode renvoie un id. 
 	//A chaque fois que le serveur est arreté puis relancé la liste des id reccomence à 1
-	public int generateclientid(){
+	public int generateclientid() throws RemoteException{
 		this.id = this.id + 1;
 		return this.id;
 	}
 	//Create permet de creer un fichier si il n'existe pas. La fonction renvoie un booléen de valeur true si le fichier a bien été créé, et false sinon.
-	public boolean create(String nom) throws Exception{//def le type + ecrire methode
+	public boolean create(String nom) throws Exception, RemoteException{//def le type + ecrire methode
 		if (new File(nom).exists()){
 			System.out.println("Le fichier " + nom + "existe deja"); 
 			this.verrouillage.put(nom, "");
@@ -71,7 +72,7 @@ public class Server implements ServerInterface {
 	}
 	 
 	//retourne le fichier seulement si les checksum du client et du server sont différents
-		public File get(String nom, String checksum) throws IOException, NoSuchAlgorithmException{
+		public File get(String nom, String checksum) throws IOException, NoSuchAlgorithmException, RemoteException{
 			//Create checksum for this file
 			File file = new File(nom);
 			if (Integer.parseInt(checksum)==-1){
@@ -98,7 +99,7 @@ public class Server implements ServerInterface {
 		
 		
 		//----------- other functions we need --------
-		private static String getFileChecksum(MessageDigest digest, File file) throws IOException
+		private static String getFileChecksum(MessageDigest digest, File file) throws IOException, RemoteException{
 		{
 		    //Get file input stream for reading the file content
 		    FileInputStream fis = new FileInputStream(file);
@@ -127,21 +128,21 @@ public class Server implements ServerInterface {
 		    }
 		     
 		    //return complete hash
-		   return sb.toString();
+		   return sb.toString();}
 		}
 		//retourne la liste des fichiers présents dans le dossier courant
 		//ne permet pas encore d'avoir l'info si le fichier est lock ou unlock
-		public HashMap<String,String> list(){
+	public HashMap<String,String> list() throws RemoteException{
 			return this.verrouillage; 
-		}
+	}
 
 	// syncLocalDir() renvoie la liste des fichiers qui sont sur le serveur. On récupere le chemin grace a un fichier f que l'on crée.
-	public File[] syncLocalDir(){//def le type + ecrire methode
+	public File[] syncLocalDir() throws RemoteException{//def le type + ecrire methode
 		File curDir = new File(".");
 		return curDir.listFiles();
 	}
 		
-	public boolean push(String nom, File contenu, String clientid) throws IOException{//def le type + ecrire methode
+	public boolean push(String nom, File contenu, String clientid) throws IOException, RemoteException{//def le type + ecrire methode
 		if(this.verrouillage.containsKey(nom) && this.verrouillage.get(nom)==clientid ){
 			FileInputStream src = new FileInputStream(contenu);
 		    FileOutputStream dest = new FileOutputStream(nom);
@@ -165,7 +166,7 @@ public class Server implements ServerInterface {
 		}
 	}
 
-	public File lock(String nom, String clientid, String checksum) throws IOException, NoSuchAlgorithmException {
+	public File lock(String nom, String clientid, String checksum) throws IOException, RemoteException, NoSuchAlgorithmException {
 		if (this.verrouillage.containsKey(nom) && this.verrouillage.get(nom)=="" ){
 			this.verrouillage.put(nom, clientid);
 			File file = new File(nom);

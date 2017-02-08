@@ -1,10 +1,12 @@
 package ca.polymtl.inf4410.tp1.client;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -74,10 +76,13 @@ public class Client {
 	//Test si le client a déjà un fichier avec un Id
 	//S'il en a déjà un il ne se passe rien
 	//s'il n'en a pas crée un fichier et y stock un nouvel id généré par le serveur.
-	private String haveAnId(String path){
+	private String haveAnId(String path) throws IOException{
 		if (new File(path).exists() || (new File(path).length() > 0)){
 			//recuperation de id 
-			return "";
+			BufferedReader in = new BufferedReader(new FileReader(path));
+			String line = in.readLine() ;
+			in.close();
+			return line;
 		}
 		else{
 			File myIdFile = new File(path);
@@ -104,7 +109,7 @@ public class Client {
 
 // affiche la liste des fichiers sur le serveur
 	@SuppressWarnings("unused")
-	private void list() {
+	private void list() throws RemoteException {
 			HashMap<String,String> liste = distantServerStub.list();
 			Set<String> cles = liste.keySet();
 			Iterator<String> it = cles.iterator();
@@ -143,8 +148,11 @@ public class Client {
 			liste[i].createNewFile();
 			}
 		}
-	private static String getFileChecksum(MessageDigest digest, File file) throws IOException
+	private static String getFileChecksum( File file) throws IOException, NoSuchAlgorithmException
 	{
+		MessageDigest digest = MessageDigest.getInstance("MD5");
+
+		
 	    //Get file input stream for reading the file content
 	    FileInputStream fis = new FileInputStream(file);
 	     
@@ -178,12 +186,10 @@ public class Client {
 	private void get (String nom) throws NoSuchAlgorithmException, IOException{
 		File f ;
 		if (new File(nom).exists()){
-		MessageDigest md5Digest = MessageDigest.getInstance("MD5");
-		
-		f = distantServerStub.get(nom, getFileChecksum(md5Digest, new File(nom)));
+			f = distantServerStub.get(nom, getFileChecksum(new File(nom)));
 		}
 		else {
-		 f = distantServerStub.get(nom, "-1");		
+			f = distantServerStub.get(nom, "-1");		
 		}
 		this.copieLocale(f);
 		System.out.println(nom + " synchronisé");
