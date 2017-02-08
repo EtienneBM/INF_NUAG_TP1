@@ -246,9 +246,10 @@ public class Client {
 		FileInputStream fis = null;
 		System.out.println("2");
 		FileOutputStream fos = null;
+		System.out.println(f.getName());
 	      try {	
 	    	  System.out.println("3");
-	         fis = new FileInputStream(f);
+	         fis = new FileInputStream(f);//pb
 	         System.out.println("4");
 	         fos = new FileOutputStream(new File(f.getName()));
 	         System.out.println("5");
