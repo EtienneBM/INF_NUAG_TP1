@@ -37,7 +37,7 @@ public class Client {
 		if (args.length > 1) {
 			commande = args[1];
 		}
-		if (commande=="list"){
+		if (commande.equals("list")){
 			client.list(); 
 		}
 	}
