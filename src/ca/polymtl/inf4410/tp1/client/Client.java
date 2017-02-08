@@ -140,6 +140,7 @@ public class Client {
 				   System.out.println("* " + cle + " non verrouillé");
 			   }
 			   else {
+				   System.out.println(liste.get(cle));
 				   System.out.println("* " + cle + " verrouillé par client "+liste.get(cle));
 			   }
 			}
@@ -213,10 +214,9 @@ public class Client {
 		else {
 			f = distantServerStub.get(nom, "-1");		
 		}
-		if (f.equals(null)){
-		System.out.println("Fichier null");
+		if (f!=null){
+			this.copieLocale(f);
 		}
-		this.copieLocale(f);
 		System.out.println(nom + " synchronisé");
 	}
 	
@@ -242,9 +242,7 @@ public class Client {
 		}
 		
 	private void copieLocale (File f){
-		System.out.println("1");
 		FileInputStream fis = null;
-		System.out.println("2");
 		FileOutputStream fos = null;
 		System.out.println(f.getName());
 	      try {	
