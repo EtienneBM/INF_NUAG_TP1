@@ -213,7 +213,7 @@ public class Client {
 		else {
 			f = distantServerStub.get(nom, "-1");		
 		}
-		if (f==null){
+		if (f.equals(null)){
 		System.out.println("Fichier null");
 		}
 		this.copieLocale(f);
