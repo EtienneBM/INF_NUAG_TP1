@@ -210,7 +210,6 @@ public class Client {
 		for (ArrayList<String> f : liste){
 			String key = it.next();
 			// Pour chaque fichier, on copie localement la fonction 
-			System.out.println("nom fichier : " + key);
 			this.copieLocale(f,key);
 		}
 		}

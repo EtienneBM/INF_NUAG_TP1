@@ -22,7 +22,9 @@ import java.util.Set;
 import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 
 public class Server implements ServerInterface {
+	// Permet de savoir si le fichier est verouillé.
 	private HashMap<String,String> verrouillage ; 
+	// Permet de stocker l'identifiant courant
 	private int id = 0;
 
 	public static void main(String[] args) {
@@ -32,8 +34,8 @@ public class Server implements ServerInterface {
 
 	public Server() {
 		super();
+		// Creation de la HashMap vide
 		this.verrouillage=new HashMap<String,String>(50); // Mise a jour de la HashMap au lancement du serveur
-		
 	}
 
 	private void run() {
@@ -58,42 +60,43 @@ public class Server implements ServerInterface {
 	
 	
 	//---------------------------- part 2 --------------------------------------
-	//cette methode renvoie un id. 
-	//A chaque fois, que le serveur est arreté puis relancé la liste des id recommence à 1
+	// Cette methode renvoie un id. 
+	// A chaque fois, que le serveur est arreté puis relancé la liste des id recommence à 1
 	public int generateclientid() throws RemoteException{
 		this.id = this.id + 1;
 		return this.id;
 	}
 	
-	//Create permet de creer un fichier si il n'existe pas. La fonction renvoie un booléen de valeur true si le fichier
-	//a bien été créé, et false sinon ce qui permet au client de vérifier l'execution de la méthode distante.
+	// Create permet de creer un fichier si il n'existe pas. La fonction renvoie un booléen de valeur true si le fichier
+	// a bien été créé, et false sinon ce qui permet au client de vérifier l'execution de la méthode distante.
 	public boolean create(String nom) throws Exception, RemoteException{
 		if (new File(nom).exists()){
 			return false;
 		}
 		else 
 		{
-			this.verrouillage.put(nom, ""); //On met a jour la HashMap avec le nouveau fichier etant deverouillé
+			//On met a jour la HashMap avec le nouveau fichier etant deverouillé
+			this.verrouillage.put(nom, ""); 
 			return new File(nom).createNewFile();
 			}
 	}
 	 
-	//retourne le fichier seulement si les checksum du client et du server sont différents
+	// Retourne le contenu du fichier seulement si les checksum du client et du server sont différents
 		public ArrayList<String> get(String nom, String checksum) throws IOException, NoSuchAlgorithmException, RemoteException{
-			//Create checksum for this file
 			File file = new File(nom);
-			// Forcer l'envoie du fichier avec la valeur -1 envoyé par le client
+			// Force l'envoie du fichier avec la valeur -1 envoyé par le client
 			if (Integer.parseInt(checksum)==-1){
 				return Server.Contenu(nom); 
 			}
 			else {
-				//Get the checksum
+				// Recupere le checksum du fichier enregistré sur le serveur. 
 				String localChecksum = getFileChecksum(file);
-				//return file only if the client and the server checksum are differents
+				// Retourne le contenu du fichier si et seulement si les deux checksums sont differents.
 				if(localChecksum == checksum){
 					return null;
 				}
 				else{
+					// On appelle la fonction Contenu qui permet de recuperer une ArrayLisy de String
 					return Server.Contenu(nom);
 				}
 			}
@@ -107,54 +110,45 @@ public class Server implements ServerInterface {
 		private static String getFileChecksum( File file) throws IOException, NoSuchAlgorithmException
 		{
 			MessageDigest digest = MessageDigest.getInstance("MD5");
-
-			
-		    //Get file input stream for reading the file content
+		    //Creation d'un FileInputStream 
 		    FileInputStream fis = new FileInputStream(file);
-		     
-		    //Create byte array to read data in chunks
 		    byte[] byteArray = new byte[1024];
 		    int bytesCount = 0; 
-		      
-		    //Read file data and update in message digest
+		    //Mise a jour apres lecture des données
 		    while ((bytesCount = fis.read(byteArray)) != -1) {
 		        digest.update(byteArray, 0, bytesCount);
 		    };
-		     
-		    //close the stream; We don't need it now.
+		    //Fermeture du FileInputStream
 		    fis.close();
-		     
-		    //Get the hash's bytes
+		    //Recuperation des bytes
 		    byte[] bytes = digest.digest();
-		     
-		    //This bytes[] has bytes in decimal format;
-		    //Convert it to hexadecimal format
+		    //Convertisseur du format des bytes
 		    StringBuilder sb = new StringBuilder();
 		    for(int i=0; i< bytes.length ;i++)
 		    {
 		        sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
 		    }
-		     
-		    //return complete hash
+		    //return le checksum
 		   return sb.toString();
 		}
+		
 		//retourne la liste des fichiers présents dans le dossier courant avec l'identifiant du client
-		//ne permet pas encore le nom du client 
 	public HashMap<String,String> list() throws RemoteException{
 			return this.verrouillage; 
 	}
 
-	// syncLocalDir() renvoie la liste des fichiers qui sont sur le serveur. On récupere le chemin grace a un fichier f 
-	//que l'on crée.
+	// syncLocalDir() renvoie la liste des fichiers qui sont sur le serveur..
 	public ArrayList<ArrayList<String>> syncLocalDir() throws IOException{
+		//recuperation de la liste des noms du fichier.
 		HashMap<String,String> listeNom = this.list();
+		// On va stocke les contenus dans une ArrayList
 		ArrayList<ArrayList<String>> listeContenus = new ArrayList<ArrayList<String>>();
 		Set<String> cles = listeNom.keySet();
 		Iterator<String> it = cles.iterator();
 		while (it.hasNext()){
 			String key = it.next();
+			// Pour chaque fichier, on stocke son contenu dans la HashMap
 			listeContenus.add(Server.Contenu(key));
-			System.out.println("Ajout de "+key);
 		}
 		return listeContenus;
 	}
@@ -163,10 +157,13 @@ public class Server implements ServerInterface {
 	public boolean push(String nom, ArrayList<String> contenu, String clientid) throws IOException, RemoteException{
 		// verification de l'existance du fichier et du verouillage du fichier par le bon client
 		if(this.verrouillage.containsKey(nom) && this.verrouillage.get(nom).equals(clientid) ){
-			// remplacement du contenu du fichier par lecture et ecriture
+			// remplacement du contenu du fichier 
+
 				FileWriter fw = new FileWriter(nom);
 				BufferedWriter output = new BufferedWriter(fw);
+				//on parcourt le contenu envoyé
 				for (String line : contenu){
+					// on réécrit chaque ligne dans le fichier
 					output.write(line);
 					output.newLine();
 				} 
@@ -181,17 +178,17 @@ public class Server implements ServerInterface {
 		}
 	}
 
+	// La fonction Contenu permet de convertir le contenu d'un fichier en un ArrayList de String. 
+	// Chaque string correspond à une ligne du fichier. 
 	public static ArrayList<String> Contenu (String fileName) throws IOException {
-		 
-		// Note : on devrait spécifier le Charset !!!!
-		LineNumberReader reader = new LineNumberReader(
-				new InputStreamReader(new FileInputStream(fileName)));
+		LineNumberReader reader = new LineNumberReader(new InputStreamReader(new FileInputStream(fileName)));
 		try {
 			ArrayList<String> list = new ArrayList<String>();
 			String line;
 			while ( (line=reader.readLine()) != null) {
 				list.add(line);
 			}
+			// minimise la memoire que prend l'ArrayList
 			list.trimToSize();
 			return list;
 		} finally {
@@ -204,10 +201,10 @@ public class Server implements ServerInterface {
 		if (this.verrouillage.containsKey(nom) && this.verrouillage.get(nom)=="" ){
 			this.verrouillage.put(nom, clientid);
 			File file = new File(nom);
-			//Get the checksum
+			// Retourne le checksum
 			String localChecksum = getFileChecksum(file);
 			
-			//return file only if the client and the server checksum are differents
+			//retourne le contenu d'un fichier si et seulement si les deux checksum sont différents.
 			if(localChecksum == checksum){
 				return null;
 			}
