@@ -33,6 +33,7 @@ public class Server implements ServerInterface {
 	public Server() {
 		super();
 		this.verrouillage=new HashMap<String,String>(50); // Mise a jour de la HashMap au lancement du serveur
+		
 	}
 
 	private void run() {

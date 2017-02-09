@@ -211,7 +211,6 @@ public class Client {
 			String key = it.next();
 			// Pour chaque fichier, on copie localement la fonction 
 			System.out.println("nom fichier : " + key);
-			System.out.println(f.get(0));
 			this.copieLocale(f,key);
 		}
 		}
