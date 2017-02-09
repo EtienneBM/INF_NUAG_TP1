@@ -117,6 +117,7 @@ public class Client {
 			File myIdFile = new File(path);
 			FileOutputStream is;
 			int id = distantServerStub.generateclientid();
+			System.out.println(id);
 			try {
 				is = new FileOutputStream(myIdFile);
 				OutputStreamWriter osw = new OutputStreamWriter(is);    
