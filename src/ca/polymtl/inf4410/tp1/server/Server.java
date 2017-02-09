@@ -80,6 +80,7 @@ public class Server implements ServerInterface {
 			// Forcer l'envoie du fichier avec la valeur -1 envoyé par le client
 			if (Integer.parseInt(checksum)==-1){
 				System.out.println("Le checksum est bien -1");
+				System.out.println(file.getName());
 				return file; 
 			}
 			else {
@@ -153,8 +154,10 @@ public class Server implements ServerInterface {
 		// verification de l'existance du fichier et du verouillage du fichier par le bon client
 		if(this.verrouillage.containsKey(nom)){
 			System.out.println("La clé existe");
+			System.out.println(this.verrouillage.get(nom));
+			System.out.println(clientid);
 			if ( this.verrouillage.get(nom).equals(clientid) ){
-				System.out.println("lid du client est le bon. On est dans la boucle");
+				System.out.println("lid du client est le bon. On est dans la boucle");//pb on rentre pas 
 			// remplacement du contenu du fichier par lecture et ecriture
 			FileInputStream src = new FileInputStream(contenu);
 		    FileOutputStream dest = new FileOutputStream(nom);

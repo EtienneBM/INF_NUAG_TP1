@@ -176,7 +176,7 @@ public class Client {
 
 
 	private void get (String nom) throws NoSuchAlgorithmException, IOException{
-		File f ;
+		File f =null;
 		if (new File(nom).exists()){
 			f = distantServerStub.get(nom, getFileChecksum(new File(nom)));
 		}
