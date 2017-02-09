@@ -232,7 +232,6 @@ public class Client {
 			BufferedReader br=new BufferedReader(ipsr);
 			String line;
 			line=br.readLine();
-			System.out.println(line);
 			br.close(); 
 			return line;
 		}

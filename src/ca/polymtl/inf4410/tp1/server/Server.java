@@ -153,6 +153,7 @@ public class Server implements ServerInterface {
 		while (it.hasNext()){
 			String key = it.next();
 			listeContenus.add(Server.Contenu(key));
+			System.out.println("Ajout de "+key);
 		}
 		return listeContenus;
 	}
