@@ -163,6 +163,9 @@ public class Client {
 // syncLocalDir récupere la liste des Files qui sont enregistrés sur le serveur. Puis la fonction, crée les fichiers en écrasant ceux qui existent déja. 
 	private void syncLocalDir() throws IOException {
 		File[] liste = distantServerStub.syncLocalDir();
+		for (int i = 0 ; i<liste.length;i++){
+			this.copieLocale(liste[i]);
+		}
 		/*for (int i =0 ; i<liste.length;i++){
 			if (liste[i].exists())
 			{liste[i].delete();}

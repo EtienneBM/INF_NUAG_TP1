@@ -151,7 +151,10 @@ public class Server implements ServerInterface {
 	// La fonction push permet de réécrire le fichier nom avec le contenu fourni si le client est celui qui a verouille
 	public boolean push(String nom, File contenu, String clientid) throws IOException, RemoteException{
 		// verification de l'existance du fichier et du verouillage du fichier par le bon client
-		if(this.verrouillage.containsKey(nom) && this.verrouillage.get(nom).equals(clientid) ){
+		if(this.verrouillage.containsKey(nom)){
+			System.out.println("La clé existe");
+			if ( this.verrouillage.get(nom).equals(clientid) ){
+				System.out.println("lid du client est le bon. On est dans la boucle");
 			// remplacement du contenu du fichier par lecture et ecriture
 			FileInputStream src = new FileInputStream(contenu);
 		    FileOutputStream dest = new FileOutputStream(nom);
@@ -171,6 +174,9 @@ public class Server implements ServerInterface {
 		    // on retourne la valeur vraie pour dire au client que les conditions etaient bien verifies.
 			return true; 
 		}
+			else {
+				return false ; 
+			}}
 		else {
 			// soit le fichier n'existe pas, soit le client n'avait pas verouille le fichier 
 			return false; 
