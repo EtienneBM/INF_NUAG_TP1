@@ -117,12 +117,11 @@ public class Client {
 			File myIdFile = new File(path);
 			FileOutputStream is;
 			int id = distantServerStub.generateclientid();
-			System.out.println(id);
 			try {
 				is = new FileOutputStream(myIdFile);
 				OutputStreamWriter osw = new OutputStreamWriter(is);    
 	            Writer w = new BufferedWriter(osw);
-	            w.write(id);
+	            w.write(""+id);
 	            w.close();
 			} catch (FileNotFoundException e) {
 				System.out.println("File not found exception " + e);

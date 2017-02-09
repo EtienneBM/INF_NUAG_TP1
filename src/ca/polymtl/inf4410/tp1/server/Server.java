@@ -56,7 +56,6 @@ public class Server implements ServerInterface {
 	//A chaque fois, que le serveur est arreté puis relancé la liste des id recommence à 1
 	public int generateclientid() throws RemoteException{
 		this.id = this.id + 1;
-		System.out.println(this.id);
 		return this.id;
 	}
 	
@@ -176,6 +175,7 @@ public class Server implements ServerInterface {
 		    src.close();
 		    dest.close();
 		    // on retourne la valeur vraie pour dire au client que les conditions etaient bien verifies.
+		    this.verrouillage.put(nom, ""); 
 			return true; 
 		}
 			else {
