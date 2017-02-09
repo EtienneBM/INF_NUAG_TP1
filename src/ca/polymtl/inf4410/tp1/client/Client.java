@@ -8,6 +8,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.rmi.AccessException;
@@ -102,9 +104,13 @@ public class Client {
 	private String haveAnId(String path) throws IOException{
 		if (new File(path).exists() || (new File(path).length() > 0)){
 			//recuperation de id 
-			BufferedReader in = new BufferedReader(new FileReader(path));
-			String line = in.readLine() ;
-			in.close();
+			InputStream ips=new FileInputStream(path); 
+			InputStreamReader ipsr=new InputStreamReader(ips);
+			BufferedReader br=new BufferedReader(ipsr);
+			String line;
+			line=br.readLine();
+			System.out.println(line);
+			br.close(); 
 			return line;
 		}
 		else{
