@@ -198,7 +198,7 @@ public class Client {
 	
 	private void lock(String nom) throws NoSuchAlgorithmException, IOException{
 		String checksum = "-1"; 
-		File f  = distantServerStub.lock(nom, this.haveAnId(nom), checksum); 
+		File f  = distantServerStub.lock(nom, this.haveAnId("idFile"), checksum); 
 		if (f!=null){
 			this.copieLocale(f);
 		}
@@ -207,7 +207,7 @@ public class Client {
 	
 	private void push(String nom) throws IOException{
 		File f = new File(nom); 
-		boolean done = distantServerStub.push(nom, f, this.haveAnId(nom));
+		boolean done = distantServerStub.push(nom, f, this.haveAnId("idFile"));
 		if (done){
 			System.out.println(nom + " a été envoyé au serveur");
 		}
