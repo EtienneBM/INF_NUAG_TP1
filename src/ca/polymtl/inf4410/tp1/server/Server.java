@@ -1,11 +1,12 @@
 package ca.polymtl.inf4410.tp1.server;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.rmi.ConnectException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -13,7 +14,11 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
+
 import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 
 public class Server implements ServerInterface {
@@ -73,7 +78,7 @@ public class Server implements ServerInterface {
 	}
 	 
 	//retourne le fichier seulement si les checksum du client et du server sont différents
-		public File get(String nom, String checksum) throws IOException, NoSuchAlgorithmException, RemoteException{
+		public ArrayList<String> get(String nom, String checksum) throws IOException, NoSuchAlgorithmException, RemoteException{
 			//Create checksum for this file
 			System.out.println("Fonction get appelé");
 			File file = new File(nom);
@@ -81,7 +86,7 @@ public class Server implements ServerInterface {
 			if (Integer.parseInt(checksum)==-1){
 				System.out.println("Le checksum est bien -1");
 				System.out.println(file.getName());
-				return file; 
+				return Server.Contenu(nom); 
 			}
 			else {
 				System.out.println("Le checksum n'set pas -1"); 
@@ -92,7 +97,7 @@ public class Server implements ServerInterface {
 					return null;
 				}
 				else{
-					return file;
+					return Server.Contenu(nom);
 				}
 			}
 		}
@@ -144,13 +149,20 @@ public class Server implements ServerInterface {
 
 	// syncLocalDir() renvoie la liste des fichiers qui sont sur le serveur. On récupere le chemin grace a un fichier f 
 	//que l'on crée.
-	public File[] syncLocalDir() throws RemoteException{
-		File curDir = new File(".");
-		return curDir.listFiles();
+	public ArrayList<ArrayList<String>> syncLocalDir() throws IOException{
+		HashMap<String,String> listeNom = this.list();
+		ArrayList<ArrayList<String>> listeContenus = new ArrayList<ArrayList<String>>();
+		Set<String> cles = listeNom.keySet();
+		Iterator<String> it = cles.iterator();
+		while (it.hasNext()){
+			String key = it.next();
+			listeContenus.add(Server.Contenu(key));
+		}
+		return listeContenus;
 	}
 		
 	// La fonction push permet de réécrire le fichier nom avec le contenu fourni si le client est celui qui a verouille
-	public boolean push(String nom, File contenu, String clientid) throws IOException, RemoteException{
+	public boolean push(String nom, ArrayList<String> contenu, String clientid) throws IOException, RemoteException{
 		// verification de l'existance du fichier et du verouillage du fichier par le bon client
 		if(this.verrouillage.containsKey(nom)){
 			System.out.println("La clé existe");
@@ -159,22 +171,14 @@ public class Server implements ServerInterface {
 			if ( this.verrouillage.get(nom).equals(clientid) ){
 				System.out.println("lid du client est le bon. On est dans la boucle");//pb on rentre pas 
 			// remplacement du contenu du fichier par lecture et ecriture
-			FileInputStream src = new FileInputStream(contenu);
-		    FileOutputStream dest = new FileOutputStream(nom);
-		 
-		    FileChannel inChannel = src.getChannel();
-		    FileChannel outChannel = dest.getChannel();
-		 
-		    for (ByteBuffer buffer = ByteBuffer.allocate(1024*1024);
-		         inChannel.read(buffer) != -1;
-		         buffer.clear()) {
-		       buffer.flip();
-		       while (buffer.hasRemaining()) outChannel.write(buffer);
-		    }
-		 
-		    src.close();
-		    dest.close();
-		    // on retourne la valeur vraie pour dire au client que les conditions etaient bien verifies.
+				FileWriter fw = new FileWriter(nom);
+				BufferedWriter output = new BufferedWriter(fw);
+				for (String line : contenu){
+					output.write(line);
+					output.newLine();
+				} 
+				output.flush(); 
+				output.close(); 
 		    this.verrouillage.put(nom, ""); 
 			return true; 
 		}
@@ -187,8 +191,25 @@ public class Server implements ServerInterface {
 		}
 	}
 
+	public static ArrayList<String> Contenu (String fileName) throws IOException {
+		 
+		// Note : on devrait spécifier le Charset !!!!
+		LineNumberReader reader = new LineNumberReader(
+				new InputStreamReader(new FileInputStream(fileName)));
+		try {
+			ArrayList<String> list = new ArrayList<String>();
+			String line;
+			while ( (line=reader.readLine()) != null) {
+				list.add(line);
+			}
+			list.trimToSize();
+			return list;
+		} finally {
+			reader.close();
+		}
+	}
 	//la fonction lock() permet au client de verouiller un fichier s'il ne l'est pas déjà.
-	public File lock(String nom, String clientid, String checksum) throws IOException, RemoteException, NoSuchAlgorithmException {
+	public ArrayList<String> lock(String nom, String clientid, String checksum) throws IOException, RemoteException, NoSuchAlgorithmException {
 		// verification si le fichier existe et s'il n'est pas déja verouillé.
 		if (this.verrouillage.containsKey(nom) && this.verrouillage.get(nom)=="" ){
 			this.verrouillage.put(nom, clientid);
@@ -201,7 +222,7 @@ public class Server implements ServerInterface {
 				return null;
 			}
 			else{
-				return file;
+				return Server.Contenu(nom);
 			}
 		}
 		else {

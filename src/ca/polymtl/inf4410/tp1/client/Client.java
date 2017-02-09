@@ -6,10 +6,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.rmi.AccessException;
@@ -19,6 +20,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -27,38 +29,52 @@ import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 
 public class Client {
 	public static void main(String[] args) throws Exception {
-		String commande = "";
-	
-		
-		/*String distantHostname = null;
-		
-		
-		if (args.length > 0) {
-			distantHostname = args[0];
-		}
-*/
+		//L'utilsateur n'a plus besoin de rentrer l'IP flottante du serveur qui est toujours la même.
 		Client client = new Client("132.207.12.226");
+		// En argument, le client rentre une commande parmi les 6 accessibles qui execute la fonction demandé
+		// Certaines fonctions appellent un argument en plus. 
+		String commande = "";
 		if (args.length > 0) {
 			commande = args[0];
 		}
 		if (commande.equals("list")){
 			client.list(); 
-		}
+		} else {
 		if (commande.equals("create")){
-			client.create(args[1]); 
-		}
+			if (args.length > 1) {
+				client.create(args[1]);
+			}
+			else {
+				System.out.println("Vous devez nommer le fichier que vous creez.");
+			}
+		} else {
 		if (commande.equals("syncLocalDir")){
 			client.syncLocalDir(); 
-		}
+		} else {
 		if (commande.equals("get")){
-			client.get(args[1]); 
-		}
+			if (args.length > 1) {
+				client.get(args[1]);
+			}
+			else {
+				System.out.println("Vous devez nommer le fichier que vous voulez synchronisez.");
+			}
+		}else {
 		if (commande.equals("lock")){
-			client.lock(args[1]); 
-		}
+			if (args.length > 1) {
+				client.lock(args[1]);
+			}
+			else {
+				System.out.println("Vous devez nommer le fichier que vous voulez verouillez.");
+			}
+		}else {
 		if (commande.equals("push")){
-			client.push(args[1]); 
-		}
+			if (args.length > 1) {
+				client.push(args[1]);
+			}
+			else {
+				System.out.println("Vous devez nommer le fichier que vous voulez mettre a jour sur le serveur.");
+			}	 
+		}}}}}}
 	}
 
 	
@@ -96,14 +112,112 @@ public class Client {
 	}
 
 
-	
 	//-------------------Part 2---------------------------
+	
+	
+	// affiche la liste des fichiers sur le serveur
+	private void list() throws RemoteException {
+			HashMap<String,String> liste = distantServerStub.list();
+			// On parcours la HashMap avec un iterator
+			Set<String> cles = liste.keySet();
+			Iterator<String> it = cles.iterator();
+			while (it.hasNext()){
+			   Object cle = it.next(); 
+			   //Pour chaque fichier, on verifie s'il est verouille.
+			   if (liste.get(cle).equals("")){
+				   System.out.println("* " + cle + " non verrouillé");
+			   }
+			   else {
+				   System.out.println("* " + cle + " verrouillé par client "+liste.get(cle));
+			   }
+			}
+			//On ecrit le nombre de fichiers stocké sur le serveur.
+			System.out.println(liste.size()+" fichier(s)");
+	}
+
+	
+	//La fonction get permet de recuperer un fichier qui est sur le serveur s'il est different de notre version. 
+	private void get (String nom) throws NoSuchAlgorithmException, IOException{
+		ArrayList<String> f =null;
+		//si le fichier existe, on recupere le contenu du fichier si les checksums sont différents, sinon, null.
+		//La fonction getFileCheksum permet de calculer le checksum associe à un fichier.
+		f = distantServerStub.get(nom, getFileChecksum(new File(nom)));
+		if (f!=null){
+			// Si on a bien recupere le contenu d'un fichier, on le copie localement
+			this.copieLocale(f,nom);
+		}
+		System.out.println(nom + " synchronisé");
+	}
+
+
+
+	//  create permet de créer un nouveau fichier avec un nom donné en paramètre. La fonction appelle la fonction create() sur le serveur distant qui crée le fichier et
+	// qui renvoie un booléen si l'opération a réussi. 
+		private void create (String nom) throws Exception {
+			boolean success = distantServerStub.create(nom);
+			if (success == true){
+				System.out.println(nom +" ajouté.");
+			}
+			else {
+				System.out.println(nom + " existe déjà.");
+			}
+			
+		}
+
+
+		// verouille le fichier et recupere le contenu pour le copier localement si le fichier a un cheksum different 
+		// de celui du serveur
+	private void lock(String nom) throws NoSuchAlgorithmException, IOException{
+			ArrayList<String> f  = distantServerStub.lock(nom, this.haveAnId(), getFileChecksum(new File(nom))); 
+			if (f!=null){
+				this.copieLocale(f,nom);
+			}
+		}
+
+
+	// Envoie un fichier et un contenu au serveur pour mettre a jour son fichier du meme nom. 
+	// Il faut que le client verouille le fichier d'abord.
+	private void push(String nom) throws IOException{
+		// done permet de savoir si l'operation a bien eu lieu 
+		boolean done = distantServerStub.push(nom, Client.Contenu(nom), this.haveAnId());
+		if (done){
+			System.out.println(nom + " a été envoyé au serveur");
+		}
+		else {
+			System.out.println("operation refusée : vous devez d'abord verrouiller le fichier");
+		}
+	}
+
+
+
+	// syncLocalDir récupere la liste des Files qui sont enregistrés sur le serveur. Puis la fonction, crée les fichiers en écrasant ceux qui existent déja. 
+	private void syncLocalDir() throws IOException, NoSuchAlgorithmException {
+		// Recuperation de la liste des fichiers
+		ArrayList<ArrayList<String>> liste = distantServerStub.syncLocalDir();
+		// Recuperation du contenu des fichiers 
+		HashMap<String, String> nomsFichiers = distantServerStub.list(); 
+		// Mise en place d'un iterator pour parcourir la liste des contenus dans le meme ordre que la liste des noms 
+		// du fichier
+		Set<String> cles = nomsFichiers.keySet();
+		Iterator<String> it = cles.iterator();
+		for (ArrayList<String> f : liste){
+			String key = it.next();
+			// Pour chaque fichier, on copie localement la fonction 
+			this.copieLocale(f,key);
+		}
+		}
+
+
+	
+	
+
 	//Test si le client a déjà un fichier avec un Id
-	//S'il en a déjà un il ne se passe rien
-	//s'il n'en a pas crée un fichier et y stock un nouvel id généré par le serveur.
-	private String haveAnId(String path) throws IOException{
+	//S'il en a déjà un il retourne l'id
+	//s'il n'en a pas crée un fichier, y stock un nouvel id généré par le serveur et retourne l'id
+	private String haveAnId() throws IOException{
+		String path="idFile" ;
 		if (new File(path).exists() || (new File(path).length() > 0)){
-			//recuperation de id 
+			// Le client a deja un id, on lit le fichier pour recuperer l'id 
 			InputStream ips=new FileInputStream(path); 
 			InputStreamReader ipsr=new InputStreamReader(ips);
 			BufferedReader br=new BufferedReader(ipsr);
@@ -114,8 +228,10 @@ public class Client {
 			return line;
 		}
 		else{
+			// Le client n'a pas d'id.
 			File myIdFile = new File(path);
 			FileOutputStream is;
+			// recuperation d'un id via le serveur
 			int id = distantServerStub.generateclientid();
 			try {
 				is = new FileOutputStream(myIdFile);
@@ -135,179 +251,65 @@ public class Client {
 	}
 	
 	
-
-// affiche la liste des fichiers sur le serveur
-	private void list() throws RemoteException {
-			HashMap<String,String> liste = distantServerStub.list();
-			Set<String> cles = liste.keySet();
-			Iterator<String> it = cles.iterator();
-			while (it.hasNext()){
-			   Object cle = it.next(); 
-			   if (liste.get(cle).equals("")){
-				   System.out.println("* " + cle + " non verrouillé");
-			   }
-			   else {
-				   System.out.println("* " + cle + " verrouillé par client "+liste.get(cle));
-			   }
+	// Contenu permet de mettre les lignes d'un fichier texte dans un tableau (ArrayList) de chaines de caractères
+	public static ArrayList<String> Contenu (String fileName) throws IOException {
+		LineNumberReader reader = new LineNumberReader(
+				new InputStreamReader(new FileInputStream(fileName)));
+		try {
+			// Creation de la ArrayList
+			ArrayList<String> list = new ArrayList<String>();
+			String line;
+			// Pour chaque ligne on la stocke dans le tableau
+			while ( (line=reader.readLine()) != null) {
+				list.add(line);
 			}
-			System.out.println(liste.size()+" fichier(s)");
-	}
-
-//  create permet de créer un nouveau fichier avec un nom donné en paramètre. La fonction appelle la fonction create() sur le serveur distant qui crée le fichier et
-// qui renvoie un booléen si l'opération a réussi. 
-	private void create (String nom) throws Exception {
-		boolean success = distantServerStub.create(nom);
-		if (success == true){
-			System.out.println(nom +" ajouté.");
-		}
-		else {
-			System.out.println(nom + " existe déjà.");
-		}
-		
-	}
-	
-// syncLocalDir récupere la liste des Files qui sont enregistrés sur le serveur. Puis la fonction, crée les fichiers en écrasant ceux qui existent déja. 
-	private void syncLocalDir() throws IOException, NoSuchAlgorithmException {
-		File[] liste = distantServerStub.syncLocalDir();
-		for (int i = 0 ; i<liste.length;i++){
-			this.copieLocale(liste[i]);
-		}
-		/*for (int i =0 ; i<liste.length;i++){
-			if (liste[i].exists())
-			{liste[i].delete();}
-			liste[i].createNewFile();
-			}*/
-		}
-
-
-
-	private void get (String nom) throws NoSuchAlgorithmException, IOException{
-		File f =null;
-		if (new File(nom).exists()){
-			f = distantServerStub.get(nom, getFileChecksum(new File(nom)));
-		}
-		else {
-			f = distantServerStub.get(nom, "-1");		
-		}
-		if (f!=null){
-			this.copieLocale(f);
-		}
-		System.out.println(nom + " synchronisé");
-	}
-	
-	
-	private void lock(String nom) throws NoSuchAlgorithmException, IOException{
-		String checksum = "-1"; 
-		File f  = distantServerStub.lock(nom, this.haveAnId("idFile"), checksum); 
-		if (f!=null){
-			this.copieLocale(f);
+			list.trimToSize();
+			return list;
+		} finally {
+			reader.close();
 		}
 	}
 	
 	
-	private void push(String nom) throws IOException{
-		File f = new File(nom); 
-		boolean done = distantServerStub.push(nom, f, this.haveAnId("idFile"));
-		if (done){
-			System.out.println(nom + " a été envoyé au serveur");
-		}
-		else {
-			System.out.println("operation refusée : vous devez d'abord verrouiller le fichier");
-		}
-		}
-		
+	// La fonction getFileCheksum permet de calculer le cheksum d'un fichier 
 	private static String getFileChecksum( File file) throws IOException, NoSuchAlgorithmException
 	{
-		MessageDigest digest = MessageDigest.getInstance("MD5");
+		if (!new File(file.getName()).exists()){
+			// Si le fichier n'existe pas, la fonction renvoie "-1"
+			return "-1";
+		}
+		else {
+			// Calcul du checksum 
+			MessageDigest digest = MessageDigest.getInstance("MD5");
+		    FileInputStream fis = new FileInputStream(file);
+		    byte[] byteArray = new byte[1024];
+		    int bytesCount = 0; 
+		    while ((bytesCount = fis.read(byteArray)) != -1) {
+		        digest.update(byteArray, 0, bytesCount);
+		    };
+		    fis.close();
+		    byte[] bytes = digest.digest();
+		    StringBuilder sb = new StringBuilder();
+		    for(int i=0; i< bytes.length ;i++)
+		    {
+		        sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+		    }
+		   return sb.toString();
+		}
+	}
+
+
+	// La fonction copieLocale permet de remplacer le contenu d'un fichier a partir de son contenu 
+	// stocké dans une ArrayList
+	private void copieLocale (ArrayList<String> f,String nom) throws NoSuchAlgorithmException, IOException{
+		FileWriter fw = new FileWriter(nom);
+		BufferedWriter output = new BufferedWriter(fw);
+		for (String line : f){
+			output.write(line);
+			output.newLine();
+		} 
+		output.flush(); 
+		output.close(); 
+	}
 	
-		
-	    //Get file input stream for reading the file content
-	    FileInputStream fis = new FileInputStream(file);
-	     
-	    //Create byte array to read data in chunks
-	    byte[] byteArray = new byte[1024];
-	    int bytesCount = 0; 
-	      
-	    //Read file data and update in message digest
-	    while ((bytesCount = fis.read(byteArray)) != -1) {
-	        digest.update(byteArray, 0, bytesCount);
-	    };
-	     
-	    //close the stream; We don't need it now.
-	    fis.close();
-	     
-	    //Get the hash's bytes
-	    byte[] bytes = digest.digest();
-	     
-	    //This bytes[] has bytes in decimal format;
-	    //Convert it to hexadecimal format
-	    StringBuilder sb = new StringBuilder();
-	    for(int i=0; i< bytes.length ;i++)
-	    {
-	        sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
-	    }
-	     
-	    //return complete hash
-	   return sb.toString();
-	}
-
-
-
-	@SuppressWarnings("unused")
-	private void copieLocale (File f) throws NoSuchAlgorithmException{
-		System.out.println("1");
-		FileInputStream fis = null;
-		System.out.println("2");
-		FileOutputStream fos = null;
-		System.out.println(f.getName());
-	      try {	
-	    	  System.out.println("3");
-	    		System.out.println(f.getName());
-	         fis = new FileInputStream(distantServerStub.get(f.getName(), "-1"));
-	         System.out.println("4");
-	         fos = new FileOutputStream(new File(f.getName()));
-	         System.out.println("5");
-	         byte[] buf = new byte[8];
-	         System.out.println("6");
-	         int n =0;
-	         System.out.println("7");
-	         while ((n = fis.read(buf)) >= 0) {
-		            // On écrit dans notre deuxième fichier avec l'objet adéquat
-		            fos.write(buf);
-		            // On affiche ce qu'a lu notre boucle au format byte et au
-		            // format char
-		            for (byte bit : buf) {
-		               System.out.print("\t" + bit + "(" + (char) bit + ")");
-		            }
-		            System.out.println("");
-		            //Nous réinitialisons le buffer à vide
-		            //au cas où les derniers byte lus ne soient pas un multiple de 8
-		            //Ceci permet d'avoir un buffer vierge à chaque lecture et ne pas avoir de doublon en fin de fichier
-		            buf = new byte[8];
-	         }
-		   } catch (FileNotFoundException e) {
-		         // Cette exception est levée si l'objet FileInputStream ne trouve
-		         // aucun fichier
-		         e.printStackTrace();
-		      } catch (IOException e) {
-		         // Celle-ci se produit lors d'une erreur d'écriture ou de lecture
-		         e.printStackTrace();
-		      } finally {
-		         // On ferme nos flux de données dans un bloc finally pour s'assurer
-		         // que ces instructions seront exécutées dans tous les cas même si
-		         // une exception est levée !
-		         try {
-		            if (fis != null)
-		               fis.close();
-		         } catch (IOException e) {
-		            e.printStackTrace();
-		         }
-		         try {
-		            if (fos != null)
-		               fos.close();
-		         } catch (IOException e) {
-		            e.printStackTrace();
-		         }
-		      }
-	}
 }
