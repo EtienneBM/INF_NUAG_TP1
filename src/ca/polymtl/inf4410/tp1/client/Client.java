@@ -172,6 +172,13 @@ public class Client {
 			if (f!=null){
 				this.copieLocale(f,nom);
 			}
+			HashMap<String,String> liste = distantServerStub.list();
+			if (liste.get(nom).equals(this.haveAnId())){
+				System.out.println("Le fichier a ete verouillé avec succes.");
+			}
+			else {
+				System.out.println("Le fichier est déja verouillé par le client "+liste.get(nom));
+			}
 		}
 
 
@@ -192,9 +199,9 @@ public class Client {
 
 	// syncLocalDir récupere la liste des Files qui sont enregistrés sur le serveur. Puis la fonction, crée les fichiers en écrasant ceux qui existent déja. 
 	private void syncLocalDir() throws IOException, NoSuchAlgorithmException {
-		// Recuperation de la liste des fichiers
+		// Recuperation de la liste des contenus des fichiers
 		ArrayList<ArrayList<String>> liste = distantServerStub.syncLocalDir();
-		// Recuperation du contenu des fichiers 
+		// Recuperation des noms des fichiers 
 		HashMap<String, String> nomsFichiers = distantServerStub.list(); 
 		// Mise en place d'un iterator pour parcourir la liste des contenus dans le meme ordre que la liste des noms 
 		// du fichier
@@ -203,6 +210,8 @@ public class Client {
 		for (ArrayList<String> f : liste){
 			String key = it.next();
 			// Pour chaque fichier, on copie localement la fonction 
+			System.out.println("nom fichier : " + key);
+			System.out.println(f.get(0));
 			this.copieLocale(f,key);
 		}
 		}

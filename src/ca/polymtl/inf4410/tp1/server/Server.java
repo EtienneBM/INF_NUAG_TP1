@@ -80,16 +80,12 @@ public class Server implements ServerInterface {
 	//retourne le fichier seulement si les checksum du client et du server sont différents
 		public ArrayList<String> get(String nom, String checksum) throws IOException, NoSuchAlgorithmException, RemoteException{
 			//Create checksum for this file
-			System.out.println("Fonction get appelé");
 			File file = new File(nom);
 			// Forcer l'envoie du fichier avec la valeur -1 envoyé par le client
 			if (Integer.parseInt(checksum)==-1){
-				System.out.println("Le checksum est bien -1");
-				System.out.println(file.getName());
 				return Server.Contenu(nom); 
 			}
 			else {
-				System.out.println("Le checksum n'set pas -1"); 
 				//Get the checksum
 				String localChecksum = getFileChecksum(file);
 				//return file only if the client and the server checksum are differents
@@ -164,12 +160,7 @@ public class Server implements ServerInterface {
 	// La fonction push permet de réécrire le fichier nom avec le contenu fourni si le client est celui qui a verouille
 	public boolean push(String nom, ArrayList<String> contenu, String clientid) throws IOException, RemoteException{
 		// verification de l'existance du fichier et du verouillage du fichier par le bon client
-		if(this.verrouillage.containsKey(nom)){
-			System.out.println("La clé existe");
-			System.out.println(this.verrouillage.get(nom));
-			System.out.println(clientid);
-			if ( this.verrouillage.get(nom).equals(clientid) ){
-				System.out.println("lid du client est le bon. On est dans la boucle");//pb on rentre pas 
+		if(this.verrouillage.containsKey(nom) && this.verrouillage.get(nom).equals(clientid) ){
 			// remplacement du contenu du fichier par lecture et ecriture
 				FileWriter fw = new FileWriter(nom);
 				BufferedWriter output = new BufferedWriter(fw);
@@ -182,9 +173,6 @@ public class Server implements ServerInterface {
 		    this.verrouillage.put(nom, ""); 
 			return true; 
 		}
-			else {
-				return false ; 
-			}}
 		else {
 			// soit le fichier n'existe pas, soit le client n'avait pas verouille le fichier 
 			return false; 
@@ -226,7 +214,6 @@ public class Server implements ServerInterface {
 			}
 		}
 		else {
-			System.out.println("Le fichier est déja verouillé par le client "+clientid);
 			return null;
 		}
 	}
