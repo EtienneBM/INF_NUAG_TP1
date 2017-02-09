@@ -25,35 +25,37 @@ import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 
 public class Client {
 	public static void main(String[] args) throws Exception {
-		String distantHostname = null;
 		String commande = "";
+	
+		
+		/*String distantHostname = null;
+		
 		
 		if (args.length > 0) {
 			distantHostname = args[0];
 		}
-
-		@SuppressWarnings("unused")
-		Client client = new Client(distantHostname);
-		if (args.length > 1) {
-			commande = args[1];
+*/
+		Client client = new Client("132.207.12.226");
+		if (args.length > 0) {
+			commande = args[0];
 		}
 		if (commande.equals("list")){
 			client.list(); 
 		}
 		if (commande.equals("create")){
-			client.create(args[2]); 
+			client.create(args[1]); 
 		}
 		if (commande.equals("syncLocalDir")){
 			client.syncLocalDir(); 
 		}
 		if (commande.equals("get")){
-			client.get(args[2]); 
+			client.get(args[1]); 
 		}
 		if (commande.equals("lock")){
-			client.lock(args[2]); 
+			client.lock(args[1]); 
 		}
 		if (commande.equals("push")){
-			client.push(args[2]); 
+			client.push(args[1]); 
 		}
 	}
 
@@ -129,7 +131,6 @@ public class Client {
 	
 
 // affiche la liste des fichiers sur le serveur
-	@SuppressWarnings("unused")
 	private void list() throws RemoteException {
 			HashMap<String,String> liste = distantServerStub.list();
 			Set<String> cles = liste.keySet();
@@ -148,7 +149,6 @@ public class Client {
 
 //  create permet de créer un nouveau fichier avec un nom donné en paramètre. La fonction appelle la fonction create() sur le serveur distant qui crée le fichier et
 // qui renvoie un booléen si l'opération a réussi. 
-	@SuppressWarnings("unused")
 	private void create (String nom) throws Exception {
 		boolean success = distantServerStub.create(nom);
 		if (success == true){
@@ -161,19 +161,56 @@ public class Client {
 	}
 	
 // syncLocalDir récupere la liste des Files qui sont enregistrés sur le serveur. Puis la fonction, crée les fichiers en écrasant ceux qui existent déja. 
-	@SuppressWarnings("unused")
 	private void syncLocalDir() throws IOException {
 		File[] liste = distantServerStub.syncLocalDir();
-		for (int i =0 ; i<liste.length;i++){
+		/*for (int i =0 ; i<liste.length;i++){
 			if (liste[i].exists())
 			{liste[i].delete();}
 			liste[i].createNewFile();
-			}
+			}*/
 		}
+
+
+
+	private void get (String nom) throws NoSuchAlgorithmException, IOException{
+		File f ;
+		if (new File(nom).exists()){
+			f = distantServerStub.get(nom, getFileChecksum(new File(nom)));
+		}
+		else {
+			f = distantServerStub.get(nom, "-1");		
+		}
+		if (f!=null){
+			this.copieLocale(f);
+		}
+		System.out.println(nom + " synchronisé");
+	}
+	
+	
+	private void lock(String nom) throws NoSuchAlgorithmException, IOException{
+		String checksum = "-1"; 
+		File f  = distantServerStub.lock(nom, this.haveAnId(nom), checksum); 
+		if (f!=null){
+			this.copieLocale(f);
+		}
+	}
+	
+	
+	private void push(String nom) throws IOException{
+		File f = new File(nom); 
+		boolean done = distantServerStub.push(nom, f, this.haveAnId(nom));
+		if (done){
+			System.out.println(nom + " a été envoyé au serveur");
+		}
+		else {
+			System.out.println("operation refusée : vous devez d'abord verrouiller le fichier");
+		}
+		}
+		
 	private static String getFileChecksum( File file) throws IOException, NoSuchAlgorithmException
 	{
 		MessageDigest digest = MessageDigest.getInstance("MD5");
-
+	
 		
 	    //Get file input stream for reading the file content
 	    FileInputStream fis = new FileInputStream(file);
@@ -204,43 +241,10 @@ public class Client {
 	    //return complete hash
 	   return sb.toString();
 	}
+
+
+
 	@SuppressWarnings("unused")
-	private void get (String nom) throws NoSuchAlgorithmException, IOException{
-		File f ;
-		if (new File(nom).exists()){
-			f = distantServerStub.get(nom, getFileChecksum(new File(nom)));
-		}
-		else {
-			f = distantServerStub.get(nom, "-1");		
-		}
-		if (f.equals(null)){
-		System.out.println("Fichier null");
-		}
-		this.copieLocale(f);
-		System.out.println(nom + " synchronisé");
-	}
-	
-	@SuppressWarnings("unused")
-	private void lock(String nom) throws NoSuchAlgorithmException, IOException{
-		String checksum = "-1"; 
-		File f  = distantServerStub.lock(nom, this.haveAnId(nom), checksum); 
-		if (f!=null){
-			this.copieLocale(f);
-		}
-	}
-	
-	@SuppressWarnings("unused")
-	private void push(String nom) throws IOException{
-		File f = new File(nom); 
-		boolean done = distantServerStub.push(nom, f, this.haveAnId(nom));
-		if (done){
-			System.out.println(nom + " a été envoyé au serveur");
-		}
-		else {
-			System.out.println("operation refusée : vous devez d'abord verrouiller le fichier");
-		}
-		}
-		
 	private void copieLocale (File f){
 		System.out.println("1");
 		FileInputStream fis = null;
@@ -249,7 +253,7 @@ public class Client {
 		System.out.println(f.getName());
 	      try {	
 	    	  System.out.println("3");
-	         fis = new FileInputStream(f);//pb
+	         fis = new FileInputStream(f);
 	         System.out.println("4");
 	         fos = new FileOutputStream(new File(f.getName()));
 	         System.out.println("5");
