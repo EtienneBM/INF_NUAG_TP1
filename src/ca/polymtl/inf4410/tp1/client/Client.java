@@ -167,7 +167,7 @@ public class Client {
 	}
 	
 // syncLocalDir récupere la liste des Files qui sont enregistrés sur le serveur. Puis la fonction, crée les fichiers en écrasant ceux qui existent déja. 
-	private void syncLocalDir() throws IOException {
+	private void syncLocalDir() throws IOException, NoSuchAlgorithmException {
 		File[] liste = distantServerStub.syncLocalDir();
 		for (int i = 0 ; i<liste.length;i++){
 			this.copieLocale(liste[i]);
@@ -254,7 +254,7 @@ public class Client {
 
 
 	@SuppressWarnings("unused")
-	private void copieLocale (File f){
+	private void copieLocale (File f) throws NoSuchAlgorithmException{
 		System.out.println("1");
 		FileInputStream fis = null;
 		System.out.println("2");
@@ -262,7 +262,8 @@ public class Client {
 		System.out.println(f.getName());
 	      try {	
 	    	  System.out.println("3");
-	         fis = new FileInputStream(f.getName());
+	    		System.out.println(f.getName());
+	         fis = new FileInputStream(distantServerStub.get(f.getName(), "-1"));
 	         System.out.println("4");
 	         fos = new FileOutputStream(new File(f.getName()));
 	         System.out.println("5");
